@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Qur'an Progress</title>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <title>Qur'an Journey</title>
 </head>
 
-<body style="font-family: Arial; padding: 30px;">
+<body style="font-family: Arial; padding: 30px; text-align:center;">
 
-<h2>Qur'an Progress Tracker</h2>
+<h2>🌙 Our Qur'an Journey</h2>
 
-<div id="login">
-  <input id="email" placeholder="Email"><br><br>
-  <input id="password" type="password" placeholder="Password"><br><br>
-  <button onclick="login()">Login</button>
+<div id="userSelect">
+  <button onclick="selectUser('yusra')" style="padding:10px 20px; margin:10px;">Yusra</button>
+  <button onclick="selectUser('anee')" style="padding:10px 20px; margin:10px;">Anee</button>
 </div>
 
-<div id="app" style="display:none;">
+<div id="app" style="display:none; margin-top:30px;">
+
+  <h3 id="username"></h3>
+
   <p>Juz</p>
   <input type="number" id="juz" min="1" max="30"><br><br>
 
@@ -32,15 +31,20 @@
     <option value="4">Full</option>
   </select><br><br>
 
-  <button onclick="save()">Save</button>
+  <button onclick="save()">Save Progress</button>
 
   <h3>Saved Progress</h3>
   <p id="result"></p>
+
+  <br>
+  <button onclick="goBack()">Switch User</button>
+
 </div>
 
 <script type="module">
 
-  const firebaseConfig = {
+ 
+ const firebaseConfig = {
   apiKey: "AIzaSyDabMS-wVS_ktdqnJbnElZLaTD5Ftty7cM",
   authDomain: "quran-tracker-37a62.firebaseapp.com",
   projectId: "quran-tracker-37a62",
@@ -51,50 +55,51 @@
 };
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
   const db = getFirestore(app);
 
-  window.login = async function() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    await signInWithEmailAndPassword(auth, email, password);
+  let currentUser = "";
+
+  window.selectUser = function(name) {
+    currentUser = name;
+    document.getElementById("userSelect").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    document.getElementById("username").innerText = "User: " + name;
+    loadData();
+  }
+
+  window.goBack = function() {
+    document.getElementById("userSelect").style.display = "block";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("result").innerText = "";
   }
 
   window.save = async function() {
-    const user = auth.currentUser;
     const juz = document.getElementById("juz").value;
     const surah = document.getElementById("surah").value;
     const progress = document.getElementById("progress").value;
 
-    await setDoc(doc(db, "progress", user.uid), {
+    await setDoc(doc(db, "progress", currentUser), {
       juz, surah, progress
     });
 
-    loadData(user.uid);
+    loadData();
   }
 
-  async function loadData(uid) {
-    const snap = await getDoc(doc(db, "progress", uid));
+  async function loadData() {
+    const snap = await getDoc(doc(db, "progress", currentUser));
     if (snap.exists()) {
       const data = snap.data();
       document.getElementById("result").innerText =
         "Juz: " + data.juz +
         " | Surah: " + data.surah +
         " | Progress: " + ["1/4","1/2","3/4","Full"][data.progress-1];
+    } else {
+      document.getElementById("result").innerText = "No progress saved yet.";
     }
   }
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-      loadData(user.uid);
-    }
-  });
 
 </script>
 
