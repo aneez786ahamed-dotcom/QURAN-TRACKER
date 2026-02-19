@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Qur'an Progress</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+</head>
+
+<body style="font-family: Arial; padding: 30px;">
+
+<h2>Qur'an Progress Tracker</h2>
+
+<div id="login">
+  <input id="email" placeholder="Email"><br><br>
+  <input id="password" type="password" placeholder="Password"><br><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="app" style="display:none;">
+  <p>Juz</p>
+  <input type="number" id="juz" min="1" max="30"><br><br>
+
+  <p>Surah</p>
+  <input type="number" id="surah" min="1" max="114"><br><br>
+
+  <p>Progress</p>
+  <select id="progress">
+    <option value="1">1/4</option>
+    <option value="2">1/2</option>
+    <option value="3">3/4</option>
+    <option value="4">Full</option>
+  </select><br><br>
+
+  <button onclick="save()">Save</button>
+
+  <h3>Saved Progress</h3>
+  <p id="result"></p>
+</div>
+
+<script type="module">
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyDabMS-wVS_ktdqnJbnElZLaTD5Ftty7cM",
+  authDomain: "quran-tracker-37a62.firebaseapp.com",
+  projectId: "quran-tracker-37a62",
+  storageBucket: "quran-tracker-37a62.firebasestorage.app",
+  messagingSenderId: "553291625814",
+  appId: "1:553291625814:web:9e5fc7b2fc05233d1c12f7",
+  measurementId: "G-26BG9CESGP"
+};
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window.login = async function() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    await signInWithEmailAndPassword(auth, email, password);
+  }
+
+  window.save = async function() {
+    const user = auth.currentUser;
+    const juz = document.getElementById("juz").value;
+    const surah = document.getElementById("surah").value;
+    const progress = document.getElementById("progress").value;
+
+    await setDoc(doc(db, "progress", user.uid), {
+      juz, surah, progress
+    });
+
+    loadData(user.uid);
+  }
+
+  async function loadData(uid) {
+    const snap = await getDoc(doc(db, "progress", uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      document.getElementById("result").innerText =
+        "Juz: " + data.juz +
+        " | Surah: " + data.surah +
+        " | Progress: " + ["1/4","1/2","3/4","Full"][data.progress-1];
+    }
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      loadData(user.uid);
+    }
+  });
+
+</script>
+
+</body>
+</html>
