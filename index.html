@@ -1,27 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Qur'an Journey</title>
+  <title>Our Qur'an Journey</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to bottom, #0f3d2e, #145a42);
+      color: white;
+      text-align: center;
+    }
+
+    .container { padding: 40px 20px; }
+
+    .moon {
+      font-size: 70px;
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #ffd700; }
+      to { text-shadow: 0 0 35px #ffffff, 0 0 50px #ffd700; }
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: 34px;
+      margin: 10px 0;
+    }
+
+    .names {
+      color: #ffd700;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 8px;
+      border-radius: 25px;
+      border: none;
+      background: #ffd700;
+      color: #0f3d2e;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #app {
+      display: none;
+      background: white;
+      color: #0f3d2e;
+      margin: 20px auto;
+      padding: 25px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .comparison {
+      background: rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 15px;
+      margin-top: 20px;
+    }
+
+    .match {
+      color: #00ffcc;
+      font-weight: bold;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 10px auto;
+      background: conic-gradient(#ffd700 0%, #ddd 0%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+  </style>
 </head>
 
-<body style="font-family: Arial; padding: 30px; text-align:center;">
+<body>
 
-<h2>🌙 Our Qur'an Journey</h2>
+<div class="container" id="mainScreen">
 
-<div id="userSelect">
-  <button onclick="selectUser('yusra')" style="padding:10px 20px; margin:10px;">Yusra</button>
-  <button onclick="selectUser('anee')" style="padding:10px 20px; margin:10px;">Anee</button>
+  <div class="moon">🌙</div>
+  <div class="title">Our Qur'an Journey</div>
+  <div class="names">Yusra ✨ Aneez</div>
+
+  <button onclick="selectUser('yusra')">Enter as Yusra</button>
+  <button onclick="selectUser('anee')">Enter as Anee</button>
+
+  <div class="comparison">
+    <h3>Today's Progress</h3>
+    <p id="compareYusra">Yusra: Loading...</p>
+    <p id="compareAnee">Anee: Loading...</p>
+    <p id="matchMessage"></p>
+  </div>
+
 </div>
 
-<div id="app" style="display:none; margin-top:30px;">
+<div id="app">
 
   <h3 id="username"></h3>
 
+  <p>Date</p>
+  <input type="date" id="date">
+
   <p>Juz</p>
-  <input type="number" id="juz" min="1" max="30"><br><br>
+  <input type="number" id="juz" min="1" max="30">
 
   <p>Surah</p>
-  <input type="number" id="surah" min="1" max="114"><br><br>
+  <select id="surah"></select>
 
   <p>Progress</p>
   <select id="progress">
@@ -29,22 +141,22 @@
     <option value="2">1/2</option>
     <option value="3">3/4</option>
     <option value="4">Full</option>
-  </select><br><br>
+  </select>
+
+  <div class="circle" id="progressCircle">0%</div>
 
   <button onclick="save()">Save Progress</button>
 
-  <h3>Saved Progress</h3>
+  <h4>Saved Progress</h4>
   <p id="result"></p>
 
-  <br>
-  <button onclick="goBack()">Switch User</button>
+  <button onclick="goBack()">Back</button>
 
 </div>
 
 <script type="module">
 
- 
- const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyDabMS-wVS_ktdqnJbnElZLaTD5Ftty7cM",
   authDomain: "quran-tracker-37a62.firebaseapp.com",
   projectId: "quran-tracker-37a62",
@@ -62,42 +174,92 @@
 
   let currentUser = "";
 
+  const surahs = [
+"1 Al-Fatihah","2 Al-Baqarah","3 Aal-E-Imran","4 An-Nisa","5 Al-Ma'idah","6 Al-An'am","7 Al-A'raf",
+"8 Al-Anfal","9 At-Tawbah","10 Yunus","11 Hud","12 Yusuf","13 Ar-Ra'd","14 Ibrahim","15 Al-Hijr",
+"16 An-Nahl","17 Al-Isra","18 Al-Kahf","19 Maryam","20 Ta-Ha","21 Al-Anbiya","22 Al-Hajj",
+"23 Al-Mu'minun","24 An-Nur","25 Al-Furqan","26 Ash-Shu'ara","27 An-Naml","28 Al-Qasas",
+"29 Al-Ankabut","30 Ar-Rum","31 Luqman","32 As-Sajdah","33 Al-Ahzab","34 Saba","35 Fatir",
+"36 Ya-Sin","37 As-Saffat","38 Sad","39 Az-Zumar","40 Ghafir","41 Fussilat","42 Ash-Shura",
+"43 Az-Zukhruf","44 Ad-Dukhan","45 Al-Jathiyah","46 Al-Ahqaf","47 Muhammad","48 Al-Fath",
+"49 Al-Hujurat","50 Qaf","51 Adh-Dhariyat","52 At-Tur","53 An-Najm","54 Al-Qamar","55 Ar-Rahman",
+"56 Al-Waqi'ah","57 Al-Hadid","58 Al-Mujadila","59 Al-Hashr","60 Al-Mumtahanah","61 As-Saff",
+"62 Al-Jumu'ah","63 Al-Munafiqun","64 At-Taghabun","65 At-Talaq","66 At-Tahrim","67 Al-Mulk",
+"68 Al-Qalam","69 Al-Haqqah","70 Al-Ma'arij","71 Nuh","72 Al-Jinn","73 Al-Muzzammil",
+"74 Al-Muddaththir","75 Al-Qiyamah","76 Al-Insan","77 Al-Mursalat","78 An-Naba","79 An-Nazi'at",
+"80 Abasa","81 At-Takwir","82 Al-Infitar","83 Al-Mutaffifin","84 Al-Inshiqaq","85 Al-Buruj",
+"86 At-Tariq","87 Al-A'la","88 Al-Ghashiyah","89 Al-Fajr","90 Al-Balad","91 Ash-Shams",
+"92 Al-Layl","93 Ad-Duha","94 Ash-Sharh","95 At-Tin","96 Al-Alaq","97 Al-Qadr",
+"98 Al-Bayyinah","99 Az-Zalzalah","100 Al-Adiyat","101 Al-Qari'ah","102 At-Takathur",
+"103 Al-Asr","104 Al-Humazah","105 Al-Fil","106 Quraysh","107 Al-Ma'un","108 Al-Kawthar",
+"109 Al-Kafirun","110 An-Nasr","111 Al-Masad","112 Al-Ikhlas","113 Al-Falaq","114 An-Nas"
+  ];
+
+  const surahSelect = document.getElementById("surah");
+  surahs.forEach(s => {
+    let option = document.createElement("option");
+    option.text = s;
+    surahSelect.add(option);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("date").value = today;
+    loadComparison(today);
+  });
+
   window.selectUser = function(name) {
     currentUser = name;
-    document.getElementById("userSelect").style.display = "none";
+    document.getElementById("mainScreen").style.display = "none";
     document.getElementById("app").style.display = "block";
     document.getElementById("username").innerText = "User: " + name;
-    loadData();
   }
 
   window.goBack = function() {
-    document.getElementById("userSelect").style.display = "block";
+    document.getElementById("mainScreen").style.display = "block";
     document.getElementById("app").style.display = "none";
-    document.getElementById("result").innerText = "";
+    loadComparison(document.getElementById("date").value);
   }
 
   window.save = async function() {
+    const date = document.getElementById("date").value;
     const juz = document.getElementById("juz").value;
     const surah = document.getElementById("surah").value;
     const progress = document.getElementById("progress").value;
 
-    await setDoc(doc(db, "progress", currentUser), {
+    await setDoc(doc(db, "progress", currentUser, "dates", date), {
       juz, surah, progress
     });
 
-    loadData();
+    updateCircle(progress);
+    loadComparison(date);
   }
 
-  async function loadData() {
-    const snap = await getDoc(doc(db, "progress", currentUser));
-    if (snap.exists()) {
-      const data = snap.data();
-      document.getElementById("result").innerText =
-        "Juz: " + data.juz +
-        " | Surah: " + data.surah +
-        " | Progress: " + ["1/4","1/2","3/4","Full"][data.progress-1];
+  function updateCircle(progress){
+    const percent = progress * 25;
+    const circle = document.getElementById("progressCircle");
+    circle.style.background = `conic-gradient(#ffd700 ${percent}%, #ddd ${percent}%)`;
+    circle.innerText = percent + "%";
+  }
+
+  async function loadComparison(date) {
+    const y = await getDoc(doc(db, "progress", "yusra", "dates", date));
+    const a = await getDoc(doc(db, "progress", "anee", "dates", date));
+
+    const yData = y.exists() ? y.data() : null;
+    const aData = a.exists() ? a.data() : null;
+
+    document.getElementById("compareYusra").innerText =
+      yData ? "Yusra: " + yData.surah : "Yusra: No entry";
+
+    document.getElementById("compareAnee").innerText =
+      aData ? "Anee: " + aData.surah : "Anee: No entry";
+
+    if(yData && aData && yData.surah === aData.surah){
+      document.getElementById("matchMessage").innerHTML =
+        "<span class='match'>✨ You are reading the same Surah today! ✨</span>";
     } else {
-      document.getElementById("result").innerText = "No progress saved yet.";
+      document.getElementById("matchMessage").innerHTML = "";
     }
   }
 
